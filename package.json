@@ -12,6 +12,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
+    "import:all": "tsx scripts/import-all.ts",
     "import:geo": "tsx scripts/import-geo-territoires.ts",
     "import:index": "tsx scripts/index-territoires.ts",
     "seed": "tsx scripts/seed.ts",

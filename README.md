@@ -148,16 +148,25 @@ cp .env.docker.example .env.docker
 # Lancer la stack complète (DB + API)
 docker compose up -d
 
-# Appliquer le schéma et importer les données
+# Appliquer le schéma et importer TOUTES les données (~30-45 min)
 docker exec api-territoires npx prisma db push
-docker exec api-territoires npx tsx scripts/import-territoires.ts --all
+docker exec api-territoires npx tsx scripts/import-all.ts
 
 # Vérifier
 curl http://localhost:3020/api/v1/territoires/health
 ```
 
-> **Note :** Le `docker-compose.yml` inclut des labels Traefik pour le reverse proxy.
-> Si vous n'utilisez pas Traefik, ignorez-les — le port 3020 est exposé directement sur localhost.
+L'import complet télécharge les données depuis les APIs publiques (geo.api.gouv.fr, data.gouv.fr, CEREMA) et charge les données seed incluses dans le repo (`data/`). Options :
+
+```bash
+npx tsx scripts/import-all.ts                # Import complet (~30-45 min)
+npx tsx scripts/import-all.ts --skip-enrezo  # Sans EnRezo CEREMA (~15 min)
+npx tsx scripts/import-all.ts --skip-geo     # Sans géométries (~10 min)
+npx tsx scripts/import-all.ts --seed-only    # Données seed uniquement (~1 min)
+```
+
+> **Note :** Le `docker-compose.yml` fonctionne sans Traefik. Le port 3020 est exposé sur localhost.
+> Pour un déploiement avec Traefik : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
 ### Option 3 : Installation manuelle (sans Docker)
 
@@ -172,12 +181,15 @@ cp .env.example .env
 npm install
 npx prisma generate
 npx prisma db push
-npm run dev
 
-# Optionnel : importer les données (~35000 communes)
-npx tsx scripts/import-territoires.ts --all
-# Ou : données minimales de test
-npx tsx scripts/seed.ts
+# Import complet autonome (~30-45 min)
+npx tsx scripts/import-all.ts
+
+# Ou : données seed uniquement (~1 min, pour tester rapidement)
+npx tsx scripts/import-all.ts --seed-only
+
+# Lancer le serveur
+npm run dev
 ```
 
 ---
