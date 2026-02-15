@@ -11,6 +11,8 @@
  *   4. Structures spécialisées (CAUE, ALEC, AREC) depuis recherche-entreprises.api.gouv.fr
  *   5. FINESS (établissements de santé) depuis data.gouv.fr
  *   6. Données seed CSV (lauréats, structures métier, aliases, adhésions)
+ *   7. Géométries dérivées (union EPCI pour PETR/SMO/SMF)
+ *   8. Géométries ALEC (copie depuis dept/région/EPCI)
  *
  * Durée estimée : ~30-45 minutes (selon débit réseau)
  */
@@ -30,6 +32,8 @@ const STEPS = {
   arec: 'AREC (Agences Régionales Énergie Climat)',
   finess: 'FINESS (établissements de santé)',
   seed: 'Données seed (lauréats, structures, aliases, adhésions)',
+  derivedGeom: 'Géométries dérivées (union EPCI → PETR/SMO/SMF)',
+  alecGeom: 'Géométries ALEC (copie dept/région/EPCI)',
 }
 
 function log(step: string, msg: string) {
@@ -277,6 +281,18 @@ async function main() {
     await importGroupementAdhesions('seed')
   } else {
     log('seed', 'Ignoré (--skip-seed)')
+  }
+
+  // Étape 7 : Géométries dérivées (union EPCI pour PETR/SMO/SMF)
+  if (!seedOnly && !skipGeo) {
+    log('derivedGeom', STEPS.derivedGeom)
+    runScript('generate-geom-from-epci.ts', 'derivedGeom')
+  }
+
+  // Étape 8 : Géométries ALEC
+  if (!seedOnly && !skipGeo) {
+    log('alecGeom', STEPS.alecGeom)
+    runScript('assign-alec-geometry.ts', 'alecGeom')
   }
 
   // Stats finales

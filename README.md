@@ -156,14 +156,16 @@ docker exec api-territoires npx tsx scripts/import-all.ts
 curl http://localhost:3020/api/v1/territoires/health
 ```
 
-L'import complet télécharge les données depuis les APIs publiques (geo.api.gouv.fr, data.gouv.fr, CEREMA) et charge les données seed incluses dans le repo (`data/`). Options :
+L'import complet télécharge les données depuis les APIs publiques (geo.api.gouv.fr, data.gouv.fr, CEREMA), charge les données seed (`data/`), puis génère les géométries dérivées (union EPCI, ALEC). Options :
 
 ```bash
-npx tsx scripts/import-all.ts                # Import complet (~30-45 min)
+npx tsx scripts/import-all.ts                # Import complet (8 étapes, ~30-45 min)
 npx tsx scripts/import-all.ts --skip-enrezo  # Sans EnRezo CEREMA (~15 min)
-npx tsx scripts/import-all.ts --skip-geo     # Sans géométries (~10 min)
+npx tsx scripts/import-all.ts --skip-geo     # Sans géométries (étapes 2, 7, 8 ignorées)
 npx tsx scripts/import-all.ts --seed-only    # Données seed uniquement (~1 min)
 ```
+
+Les 8 étapes : territoires, géométries de base, EnRezo, CAUE/ALEC/AREC, FINESS, seed CSV, géométries dérivées (union EPCI), géométries ALEC.
 
 > **Note :** Le `docker-compose.yml` fonctionne sans Traefik. Le port 3020 est exposé sur localhost.
 > Pour un déploiement avec Traefik : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
