@@ -104,46 +104,6 @@ export default function ImportPage() {
           'FALSE',
         ],
       ],
-      economes: [
-        [
-          'Email',
-          'Nom',
-          'Prénom',
-          'Téléphone',
-          'Code Région',
-          'Code Département',
-          'Structure ID',
-          'Statut',
-          'Réseau',
-          'AAP',
-          'Financement CHENE',
-          'Financement ACTEE',
-          'Financement Autre',
-          'Nb Formations',
-          'Nb Bimestrielles',
-          'Nb Café Connect',
-          'Nb Newsletters',
-        ],
-        [
-          'jean.dupont@example.fr',
-          'Dupont',
-          'Jean',
-          '0123456789',
-          '11',
-          '75',
-          '',
-          'ACTIF',
-          'FNCCR',
-          'AAP1',
-          'TRUE',
-          'FALSE',
-          '',
-          '5',
-          '3',
-          '2',
-          '10',
-        ],
-      ],
       structures: [
         [
           'Nom',
@@ -202,12 +162,6 @@ export default function ImportPage() {
             Template Lauréats
           </button>
           <button
-            onClick={() => downloadTemplate('economes')}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-          >
-            Template Économes
-          </button>
-          <button
             onClick={() => downloadTemplate('structures')}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
           >
@@ -229,7 +183,6 @@ export default function ImportPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="laureats">Lauréats</option>
-              <option value="economes">Économes de Flux</option>
               <option value="structures">Structures</option>
             </select>
           </div>

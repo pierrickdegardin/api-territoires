@@ -17,7 +17,7 @@ const spec = {
     title: 'API Territoires',
     version: '2.0.0',
     description:
-      "API publique de données territoriales françaises. Fournit les régions, départements, communes, groupements (EPCI, syndicats), données énergétiques EnRezo (CEREMA), lauréats ACTEE, économes de flux et structures d'accompagnement. Source unique de référence pour toutes les données géographiques et territoriales.",
+      "API publique de données territoriales françaises. Fournit les régions, départements, communes, groupements (EPCI, syndicats), données énergétiques EnRezo (CEREMA), lauréats ACTEE et structures d'accompagnement. Source unique de référence pour toutes les données géographiques et territoriales.",
     contact: {
       name: 'Pierrick de Gardin',
       url: 'https://carte.pierrickdegardin.fr',
@@ -41,7 +41,6 @@ const spec = {
     { name: 'Batch', description: 'Matching par lots (batch)' },
     { name: 'EnRezo', description: 'Données énergétiques CEREMA (gisements, installations, réseaux, zones)' },
     { name: 'Lauréats', description: "Lauréats des programmes d'accompagnement ACTEE" },
-    { name: 'Économes', description: 'Économes de flux' },
     { name: 'Structures', description: "Structures d'accompagnement" },
     { name: 'Stats', description: 'Statistiques agrégées' },
     { name: 'Santé', description: 'Health check et monitoring' },
@@ -1102,125 +1101,6 @@ const spec = {
         },
       },
     },
-    '/economes': {
-      get: {
-        tags: ['Économes'],
-        summary: 'Lister les économes de flux',
-        description:
-          'Liste les économes de flux avec filtres et pagination. Inclut les informations de la structure rattachée.',
-        operationId: 'listEconomes',
-        parameters: [
-          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
-          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
-          { $ref: '#/components/parameters/RegionFilter' },
-          { $ref: '#/components/parameters/DepartementFilter' },
-          { name: 'statut', in: 'query', schema: { type: 'string' }, description: "Statut de l'économe" },
-          { name: 'reseau', in: 'query', schema: { type: 'string' }, description: "Réseau d'appartenance" },
-          { name: 'structure', in: 'query', schema: { type: 'string' }, description: 'ID de la structure' },
-          { $ref: '#/components/parameters/SearchQuery' },
-        ],
-        responses: {
-          '200': {
-            description: 'Liste des économes',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    economes: { type: 'array', items: { $ref: '#/components/schemas/EconomeFlux' } },
-                    pagination: { $ref: '#/components/schemas/PaginationInfo' },
-                  },
-                },
-              },
-            },
-          },
-          '500': { $ref: '#/components/responses/InternalError' },
-        },
-      },
-      post: {
-        tags: ['Économes'],
-        summary: 'Créer un économe',
-        operationId: 'createEconome',
-        security: [{ ApiKeyAuth: [] }],
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/EconomeFluxInput' } } },
-        },
-        responses: {
-          '201': {
-            description: 'Économe créé',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/EconomeFlux' } } },
-          },
-          '400': { $ref: '#/components/responses/BadRequest' },
-          '500': { $ref: '#/components/responses/InternalError' },
-        },
-      },
-    },
-    '/economes/{id}': {
-      get: {
-        tags: ['Économes'],
-        summary: "Détail d'un économe",
-        operationId: 'getEconome',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: {
-          '200': {
-            description: "Détail de l'économe",
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/EconomeFlux' } } },
-          },
-          '404': { $ref: '#/components/responses/NotFound' },
-          '500': { $ref: '#/components/responses/InternalError' },
-        },
-      },
-      put: {
-        tags: ['Économes'],
-        summary: 'Mettre à jour un économe',
-        operationId: 'updateEconome',
-        security: [{ ApiKeyAuth: [] }],
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/EconomeFluxInput' } } },
-        },
-        responses: {
-          '200': {
-            description: 'Économe mis à jour',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/EconomeFlux' } } },
-          },
-          '404': { $ref: '#/components/responses/NotFound' },
-          '500': { $ref: '#/components/responses/InternalError' },
-        },
-      },
-    },
-    '/economes/geojson': {
-      get: {
-        tags: ['Économes', 'GeoJSON'],
-        summary: 'Export GeoJSON des économes',
-        operationId: 'getEconomesGeoJSON',
-        parameters: [
-          { $ref: '#/components/parameters/RegionFilter' },
-          { $ref: '#/components/parameters/DepartementFilter' },
-          { name: 'statut', in: 'query', schema: { type: 'string' } },
-          { name: 'reseau', in: 'query', schema: { type: 'string' } },
-        ],
-        responses: {
-          '200': {
-            description: 'GeoJSON FeatureCollection',
-            content: {
-              'application/geo+json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    type: { type: 'string', enum: ['FeatureCollection'] },
-                    features: { type: 'array', items: { $ref: '#/components/schemas/GeoJSONFeature' } },
-                  },
-                },
-              },
-            },
-          },
-          '500': { $ref: '#/components/responses/InternalError' },
-        },
-      },
-    },
     '/structures': {
       get: {
         tags: ['Structures'],
@@ -1348,7 +1228,7 @@ const spec = {
         tags: ['Stats'],
         summary: 'Statistiques dashboard',
         description:
-          'Retourne les statistiques agrégées: nombre de lauréats, économes et structures par source, statut, type et région. Inclut les agrégats financiers.',
+          'Retourne les statistiques agrégées: nombre de lauréats et structures par source, statut, type et région. Inclut les agrégats financiers.',
         operationId: 'getStats',
         parameters: [{ $ref: '#/components/parameters/RegionFilter' }],
         responses: {
@@ -1374,13 +1254,6 @@ const spec = {
                         },
                       },
                     },
-                    economes: {
-                      type: 'object',
-                      properties: {
-                        total: { type: 'integer' },
-                        byStatut: { type: 'object', additionalProperties: { type: 'integer' } },
-                      },
-                    },
                     structures: { type: 'object', properties: { total: { type: 'integer' } } },
                     financials: {
                       type: 'object',
@@ -1398,7 +1271,6 @@ const spec = {
                           code: { type: 'string' },
                           nom: { type: 'string' },
                           nbLaureats: { type: 'integer' },
-                          nbEconomes: { type: 'integer' },
                           coutTotal: { type: 'number' },
                           aideSollicitee: { type: 'number' },
                         },
@@ -1658,39 +1530,6 @@ const spec = {
           aideValidee: { type: 'number' },
         },
         required: ['nom'],
-      },
-      EconomeFlux: {
-        type: 'object',
-        description: 'Économe de flux',
-        properties: {
-          id: { type: 'string' },
-          nom: { type: 'string' },
-          prenom: { type: 'string' },
-          email: { type: 'string', format: 'email', nullable: true },
-          statut: { type: 'string' },
-          reseau: { type: 'string', nullable: true },
-          regionCode: { type: 'string', nullable: true },
-          departementCode: { type: 'string', nullable: true },
-          structureId: { type: 'string', nullable: true },
-          structure: { $ref: '#/components/schemas/Structure' },
-          createdAt: { type: 'string', format: 'date-time' },
-          updatedAt: { type: 'string', format: 'date-time' },
-        },
-        required: ['id', 'nom', 'prenom'],
-      },
-      EconomeFluxInput: {
-        type: 'object',
-        properties: {
-          nom: { type: 'string' },
-          prenom: { type: 'string' },
-          email: { type: 'string', format: 'email' },
-          statut: { type: 'string' },
-          reseau: { type: 'string' },
-          regionCode: { type: 'string' },
-          departementCode: { type: 'string' },
-          structureId: { type: 'string' },
-        },
-        required: ['nom', 'prenom'],
       },
       Structure: {
         type: 'object',

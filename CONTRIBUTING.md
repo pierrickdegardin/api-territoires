@@ -40,7 +40,6 @@ Tous les endpoints sont dans `src/app/api/v1/`:
 | `territoires/` | API territoriale (régions, départements, communes, groupements) |
 | `enrezo/`      | Données énergétiques CEREMA                                     |
 | `laureats/`    | Lauréats ACTEE/CHENE                                            |
-| `economes/`    | Économes de flux                                                |
 | `structures/`  | Structures employeuses                                          |
 
 ### Ajouter un nouvel endpoint

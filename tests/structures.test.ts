@@ -47,7 +47,6 @@ const sampleStructure = {
   groupementSiren: '200012345',
   region: { nom: 'Nouvelle-Aquitaine' },
   departement: { nom: 'Landes' },
-  _count: { economes: 3 },
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -106,7 +105,6 @@ describe('GET /api/v1/structures/[id]', () => {
   it('should return 200 with structure detail', async () => {
     mockPrisma.structure.findUnique.mockResolvedValue({
       ...sampleStructure,
-      economes: [{ id: 'eco-001', nom: 'Dupont', prenom: 'Jean', email: 'jean@ex.fr', statut: 'ACTIF' }],
       groupement: { siren: '200012345', nom: 'SYDEC' },
     })
 

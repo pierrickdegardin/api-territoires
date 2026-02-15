@@ -13,15 +13,6 @@ async function handleGet(request: NextRequest, { params }: { params: Promise<{ i
         region: true,
         departement: true,
         groupement: true,
-        economes: {
-          select: {
-            id: true,
-            nom: true,
-            prenom: true,
-            email: true,
-            statut: true,
-          },
-        },
       },
     })
 
@@ -89,23 +80,12 @@ async function handlePut(request: NextRequest, { params }: { params: Promise<{ i
 async function handleDelete(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    // Vérifier qu'il n'y a pas d'économes liés
     const structure = await prisma.structure.findUnique({
       where: { id },
-      include: { _count: { select: { economes: true } } },
     })
 
     if (!structure) {
       return NextResponse.json({ error: 'Structure non trouvée' }, { status: 404 })
-    }
-
-    if (structure._count.economes > 0) {
-      return NextResponse.json(
-        {
-          error: `Impossible de supprimer: ${structure._count.economes} économe(s) lié(s)`,
-        },
-        { status: 400 }
-      )
     }
 
     await prisma.structure.delete({

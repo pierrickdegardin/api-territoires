@@ -1,4 +1,4 @@
-import { PrismaClient, TypeStructure, SourceDonnees, StatutEF, StatutLaureat, GeoMode } from '@prisma/client'
+import { PrismaClient, TypeStructure, SourceDonnees, StatutLaureat, GeoMode } from '@prisma/client'
 import * as ExcelJS from 'exceljs'
 
 const prisma = new PrismaClient()
@@ -28,17 +28,6 @@ const regionMapping: Record<string, string> = {
   Mayotte: '06',
   DROM: '01', // Guadeloupe par défaut pour DROM générique
   'Outre-mer': '00', // Marqueur spécial, on utilisera le département pour déterminer la région
-}
-
-// Mapping des statuts EF
-const statutEFMapping: Record<string, StatutEF> = {
-  'EN POSTE': 'ACTIF',
-  'EN FORMATION': 'EN_FORMATION',
-  PARTI: 'INACTIF',
-  'PLUS EN POSTE': 'INACTIF',
-  PROSPECT: 'EN_FORMATION',
-  ACTIF: 'ACTIF',
-  INACTIF: 'INACTIF',
 }
 
 // Mapping des types de structure vers l'enum TypeStructure
@@ -326,127 +315,6 @@ async function getOrCreateStructure(
   return structure.id
 }
 
-async function importEconomes() {
-  console.log('\n=== IMPORT ÉCONOMES DE FLUX ===')
-
-  const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.readFile('/root/chene6/data/New BDD Suivi des Economes de Flux(Données).csv')
-  const worksheet = workbook.worksheets[0]
-
-  // Convertir en tableau 2D
-  const data: any[][] = []
-  worksheet.eachRow((row) => {
-    const rowData: any[] = []
-    row.eachCell((cell) => {
-      rowData.push(cell.value)
-    })
-    data.push(rowData)
-  })
-
-  // Les headers sont à la ligne 4 (index 3)
-  const headers = data[3]
-  console.log('Headers trouvés:', headers?.slice(0, 10))
-
-  const rows = data.slice(4).filter((row) => row[0] && String(row[0]).includes('@'))
-
-  console.log(`Lignes à importer: ${rows.length}`)
-
-  let created = 0,
-    updated = 0,
-    errors = 0,
-    skipped = 0
-
-  for (const row of rows) {
-    try {
-      const email = String(row[0] || '')
-        .trim()
-        .toLowerCase()
-      if (!email || !email.includes('@')) continue
-
-      const regionName = String(row[1] || '').trim()
-      const deptName = String(row[2] || '').trim()
-      const groupement = String(row[3] || '').trim()
-      const membre = String(row[4] || '').trim()
-      const nom = String(row[5] || '').trim()
-      const prenom = String(row[6] || '').trim()
-      const tel = String(row[7] || '').trim()
-      const statut = String(row[8] || '').trim()
-      const reseau = String(row[9] || '').trim()
-      const aap = String(row[11] || '').trim()
-      const actee1 = row[14] === 1 || row[14] === '1'
-      const actee2 = row[15] === 1 || row[15] === '1'
-      const acteePlus = row[16] === 1 || row[16] === '1'
-      const typeStruct = String(row[19] || '').trim()
-
-      const departementCode = getDepartementCode(deptName)
-      const regionCode = getRegionCode(regionName, departementCode)
-
-      // Vérifier que région et département existent
-      if (!regionCode || !departementCode) {
-        skipped++
-        if (skipped <= 5) {
-          console.log(`Skip (pas de région/dept): ${email} - Region: "${regionName}" Dept: "${deptName}"`)
-        }
-        continue
-      }
-
-      // Vérifier que les codes existent en base
-      const [regionExists, deptExists] = await Promise.all([
-        prisma.region.findUnique({ where: { code: regionCode } }),
-        prisma.departement.findUnique({ where: { code: departementCode } }),
-      ])
-
-      if (!regionExists || !deptExists) {
-        skipped++
-        if (skipped <= 5) {
-          console.log(`Skip (codes invalides): ${email} - Region: ${regionCode} Dept: ${departementCode}`)
-        }
-        continue
-      }
-
-      // Déterminer le nom de la structure
-      const structureNom = groupement || membre || `Structure de ${prenom} ${nom}`
-      const structureType = getTypeStructure(typeStruct)
-
-      // Créer ou récupérer la structure
-      const structureId = await getOrCreateStructure(structureNom, structureType, regionCode, departementCode)
-
-      const economeData = {
-        email,
-        nom: nom || 'Inconnu',
-        prenom: prenom || 'Inconnu',
-        telephone: tel || null,
-        regionCode,
-        departementCode,
-        structureId,
-        statut: statutEFMapping[statut] || 'ACTIF',
-        reseau: reseau || null,
-        aap: aap || null,
-        financementActee: actee1 || actee2,
-        financementChene: acteePlus,
-      }
-
-      const existing = await prisma.economeFlux.findFirst({ where: { email } })
-
-      if (existing) {
-        await prisma.economeFlux.update({
-          where: { id: existing.id },
-          data: economeData,
-        })
-        updated++
-      } else {
-        await prisma.economeFlux.create({ data: economeData })
-        created++
-      }
-    } catch (e: any) {
-      errors++
-      if (errors < 10) console.error(`Erreur: ${e.message}`)
-    }
-  }
-
-  console.log(`Créés: ${created}, Mis à jour: ${updated}, Ignorés: ${skipped}, Erreurs: ${errors}`)
-}
-
 async function importActeePlus() {
   console.log('\n=== IMPORT ACTEE+ (Lauréats) ===')
 
@@ -716,20 +584,14 @@ async function main() {
     process.exit(1)
   }
 
-  await importEconomes()
   await importActeePlus()
   await importDataExport2()
 
   // Stats finales
-  const [laureats, economes, structures] = await Promise.all([
-    prisma.laureat.count(),
-    prisma.economeFlux.count(),
-    prisma.structure.count(),
-  ])
+  const [laureats, structures] = await Promise.all([prisma.laureat.count(), prisma.structure.count()])
 
   console.log('\n=== STATS FINALES ===')
   console.log(`Lauréats: ${laureats}`)
-  console.log(`Économes: ${economes}`)
   console.log(`Structures: ${structures}`)
 }
 

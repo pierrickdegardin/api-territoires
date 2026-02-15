@@ -21,7 +21,6 @@ export default function AdminNav({ user }: AdminNavProps) {
   const navItems = [
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/laureats', label: 'Lauréats' },
-    { href: '/admin/economes', label: 'Économes' },
     { href: '/admin/structures', label: 'Structures' },
     { href: '/admin/import', label: 'Import' },
   ]

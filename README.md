@@ -65,7 +65,6 @@ api-territoires/
 │   │   ├── territoires/          # Territoires (15 endpoints)
 │   │   ├── enrezo/               # Données énergétiques CEREMA
 │   │   ├── laureats/             # Lauréats ACTEE/CHENE
-│   │   ├── economes/             # Économes de flux
 │   │   ├── structures/           # Structures employeuses
 │   │   └── stats/                # Statistiques globales
 │   ├── app/api/auth/             # JWT admin (login/logout/me)
@@ -347,12 +346,11 @@ curl "http://localhost:3020/api/v1/enrezo?type=zone&subtype=CHALEUR_FORT_POTENTI
 
 ### Données métier
 
-| Endpoint      | Description                                                 |
-| ------------- | ----------------------------------------------------------- |
-| `/laureats`   | Lauréats ACTEE/CHENE (list, detail, geojson)                |
-| `/economes`   | Économes de flux (list, detail, geojson, search-by-commune) |
-| `/structures` | Structures employeuses (list, detail, geojson)              |
-| `/stats`      | Dashboard statistiques globales                             |
+| Endpoint      | Description                                    |
+| ------------- | ---------------------------------------------- |
+| `/laureats`   | Lauréats ACTEE/CHENE (list, detail, geojson)   |
+| `/structures` | Structures employeuses (list, detail, geojson) |
+| `/stats`      | Dashboard statistiques globales                |
 
 ### Authentification admin
 
@@ -555,7 +553,6 @@ Tous les endpoints sont publics : `Access-Control-Allow-Origin: *`
 | ReseauChaleurFroid     | Réseaux C&F               | UUID             | MultiLineString    |
 | ZoneOpportunite        | Zones potentiel           | UUID             | MultiPolygon       |
 | Laureat                | Lauréats ACTEE/CHENE      | UUID             | -                  |
-| EconomeFlux            | Économes de flux          | UUID             | -                  |
 | Structure              | Structures employeuses    | UUID             | Point              |
 | AdminUser              | Comptes admin             | UUID             | -                  |
 | BatchMatchRequest      | Requêtes batch            | UUID             | -                  |

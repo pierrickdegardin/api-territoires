@@ -9,7 +9,7 @@ async function handlePost(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const type = formData.get('type') as string // 'laureats', 'economes', 'structures'
+    const type = formData.get('type') as string // 'laureats', 'structures'
 
     if (!file) {
       return NextResponse.json({ error: 'Fichier requis' }, { status: 400 })
@@ -18,10 +18,7 @@ async function handlePost(request: NextRequest) {
     // Validate import type with Zod
     const typeResult = importTypeSchema.safeParse(type)
     if (!typeResult.success) {
-      return NextResponse.json(
-        { error: 'Type invalide. Valeurs acceptées: laureats, economes, structures' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Type invalide. Valeurs acceptées: laureats, structures' }, { status: 400 })
     }
 
     // Lire le fichier Excel
@@ -58,9 +55,6 @@ async function handlePost(request: NextRequest) {
     switch (type) {
       case 'laureats':
         result = await importLaureats(data)
-        break
-      case 'economes':
-        result = await importEconomes(data)
         break
       case 'structures':
         result = await importStructures(data)
@@ -141,61 +135,6 @@ async function importLaureats(data: any[]): Promise<{ created: number; updated: 
       }
     } catch (e: any) {
       errors.push(`Erreur ligne ${row['Nom'] || 'inconnue'}: ${e.message}`)
-    }
-  }
-
-  return { created, updated, errors }
-}
-
-async function importEconomes(data: any[]): Promise<{ created: number; updated: number; errors: string[] }> {
-  let created = 0
-  let updated = 0
-  const errors: string[] = []
-
-  for (const row of data) {
-    try {
-      const economeData = {
-        email: row['Email'] || row['email'],
-        nom: row['Nom'] || row['nom'],
-        prenom: row['Prénom'] || row['prenom'],
-        telephone: row['Téléphone'] || row['telephone'],
-        regionCode: row['Code Région'] || row['regionCode'],
-        departementCode: row['Code Département'] || row['departementCode'],
-        structureId: row['Structure ID'] || row['structureId'],
-        statut: row['Statut'] || row['statut'] || 'ACTIF',
-        reseau: row['Réseau'] || row['reseau'],
-        aap: row['AAP'] || row['aap'],
-        financementChene: !!row['Financement CHENE'] || !!row['financementChene'],
-        financementActee: !!row['Financement ACTEE'] || !!row['financementActee'],
-        financementAutre: row['Financement Autre'] || row['financementAutre'],
-        nbFormations: parseInt(row['Nb Formations'] || row['nbFormations']) || 0,
-        nbBimestrielles: parseInt(row['Nb Bimestrielles'] || row['nbBimestrielles']) || 0,
-        nbCafeConnect: parseInt(row['Nb Café Connect'] || row['nbCafeConnect']) || 0,
-        nbNewsletters: parseInt(row['Nb Newsletters'] || row['nbNewsletters']) || 0,
-      }
-
-      if (!economeData.email) {
-        errors.push(`Ligne ignorée: email manquant`)
-        continue
-      }
-
-      // Upsert basé sur email
-      const existing = await prisma.economeFlux.findFirst({
-        where: { email: economeData.email },
-      })
-
-      if (existing) {
-        await prisma.economeFlux.update({
-          where: { id: existing.id },
-          data: economeData,
-        })
-        updated++
-      } else {
-        await prisma.economeFlux.create({ data: economeData })
-        created++
-      }
-    } catch (e: any) {
-      errors.push(`Erreur ligne ${row['Email'] || 'inconnue'}: ${e.message}`)
     }
   }
 

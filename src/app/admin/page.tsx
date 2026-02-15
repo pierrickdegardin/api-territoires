@@ -3,26 +3,20 @@ import Link from 'next/link'
 
 export default async function AdminDashboard() {
   // Statistiques
-  const [totalLaureats, totalEconomes, totalStructures, laureatsParStatut, economesParStatut, structuresParType] =
-    await Promise.all([
-      prisma.laureat.count(),
-      prisma.economeFlux.count(),
-      prisma.structure.count(),
-      prisma.laureat.groupBy({
-        by: ['statut'],
-        _count: true,
-      }),
-      prisma.economeFlux.groupBy({
-        by: ['statut'],
-        _count: true,
-      }),
-      prisma.structure.groupBy({
-        by: ['type'],
-        _count: true,
-        orderBy: { _count: { type: 'desc' } },
-        take: 10,
-      }),
-    ])
+  const [totalLaureats, totalStructures, laureatsParStatut, structuresParType] = await Promise.all([
+    prisma.laureat.count(),
+    prisma.structure.count(),
+    prisma.laureat.groupBy({
+      by: ['statut'],
+      _count: true,
+    }),
+    prisma.structure.groupBy({
+      by: ['type'],
+      _count: true,
+      orderBy: { _count: { type: 'desc' } },
+      take: 10,
+    }),
+  ])
 
   const stats = [
     {
@@ -30,12 +24,6 @@ export default async function AdminDashboard() {
       value: totalLaureats,
       href: '/admin/laureats',
       color: 'bg-blue-500',
-    },
-    {
-      label: 'Économes de Flux',
-      value: totalEconomes,
-      href: '/admin/economes',
-      color: 'bg-green-500',
     },
     {
       label: 'Structures',
@@ -50,7 +38,7 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -71,25 +59,12 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Détails */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Lauréats par statut */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Lauréats par statut</h2>
           <ul className="space-y-2">
             {laureatsParStatut.map((item) => (
-              <li key={item.statut} className="flex justify-between">
-                <span className="text-gray-600">{item.statut}</span>
-                <span className="font-medium">{item._count}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Économes par statut */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Économes par statut</h2>
-          <ul className="space-y-2">
-            {economesParStatut.map((item) => (
               <li key={item.statut} className="flex justify-between">
                 <span className="text-gray-600">{item.statut}</span>
                 <span className="font-medium">{item._count}</span>
@@ -124,12 +99,6 @@ export default async function AdminDashboard() {
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
             Ajouter un lauréat
-          </Link>
-          <Link
-            href="/admin/economes?action=new"
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-          >
-            Ajouter un économe
           </Link>
         </div>
       </div>

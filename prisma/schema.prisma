@@ -23,7 +23,6 @@ model Region {
   departements Departement[]
   structures   Structure[]
   laureats     Laureat[]
-  economes     EconomeFlux[]
 
   @@index([centroid], type: Gist)
   @@index([geometry], type: Gist)
@@ -45,7 +44,6 @@ model Departement {
   region     Region                   @relation(fields: [codeRegion], references: [code])
   structures Structure[]
   laureats   Laureat[]
-  economes   EconomeFlux[]
 
   @@index([codeRegion])
   @@index([centroid], type: Gist)
@@ -611,14 +609,6 @@ enum SourceDonnees {
   @@map("source_donnees")
 }
 
-enum StatutEF {
-  ACTIF
-  INACTIF
-  EN_FORMATION
-
-  @@map("statut_ef")
-}
-
 enum GeoMode {
   TERRITOIRE
   CUSTOM
@@ -672,7 +662,6 @@ model Structure {
   createdBy         String?       @map("created_by") @db.VarChar(100)
 
   // Relations
-  economes          EconomeFlux[]
   groupement        Groupement?   @relation(fields: [groupementSiren], references: [siren])
   departement       Departement?  @relation(fields: [departementCode], references: [code])
   region            Region?       @relation(fields: [regionCode], references: [code])
@@ -738,54 +727,6 @@ model Laureat {
   @@index([regionCode])
   @@index([departementCode])
   @@map("laureat")
-}
-
-// Économe de Flux
-model EconomeFlux {
-  id                String      @id @default(cuid())
-  email             String      @unique @db.VarChar(100)
-  nom               String      @db.VarChar(100)
-  prenom            String      @db.VarChar(100)
-  telephone         String?     @db.VarChar(20)
-
-  // Localisation
-  regionCode        String      @map("region_code") @db.VarChar(2)
-  departementCode   String      @map("departement_code") @db.VarChar(3)
-
-  // Structure employeuse
-  structureId       String      @map("structure_id")
-
-  // Métadonnées
-  statut            StatutEF    @default(ACTIF)
-  reseau            String?     @db.VarChar(50)
-  aap               String?     @db.VarChar(100)
-
-  // Financement
-  financementChene  Boolean     @default(false) @map("financement_chene")
-  financementActee  Boolean     @default(false) @map("financement_actee")
-  financementAutre  String?     @map("financement_autre") @db.VarChar(200)
-
-  // Engagement
-  nbFormations      Int         @default(0) @map("nb_formations")
-  nbBimestrielles   Int         @default(0) @map("nb_bimestrielles")
-  nbCafeConnect     Int         @default(0) @map("nb_cafe_connect")
-  nbNewsletters     Int         @default(0) @map("nb_newsletters")
-
-  // Audit
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
-  createdBy         String?     @map("created_by") @db.VarChar(100)
-
-  // Relations
-  structure         Structure   @relation(fields: [structureId], references: [id])
-  region            Region      @relation(fields: [regionCode], references: [code])
-  departement       Departement @relation(fields: [departementCode], references: [code])
-
-  @@index([structureId])
-  @@index([statut])
-  @@index([regionCode])
-  @@index([departementCode])
-  @@map("econome_flux")
 }
 
 // Utilisateur admin

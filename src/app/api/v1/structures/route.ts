@@ -31,7 +31,6 @@ async function handleGet(request: NextRequest) {
         include: {
           region: { select: { nom: true } },
           departement: { select: { nom: true } },
-          _count: { select: { economes: true } },
         },
       }),
       prisma.structure.count({ where }),

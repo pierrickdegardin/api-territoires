@@ -338,42 +338,6 @@ export const createLaureatBodySchema = z.object({
 /** PUT /api/v1/laureats/[id] - same as create but all optional */
 export const updateLaureatBodySchema = createLaureatBodySchema.partial()
 
-/** GET /api/v1/economes */
-export const economesQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(500).default(50),
-  region: z.string().optional(),
-  departement: z.string().optional(),
-  statut: z.string().optional(),
-  reseau: z.string().optional(),
-  structure: z.string().optional(),
-  q: z.string().max(200).optional(),
-})
-
-/** POST /api/v1/economes */
-export const createEconomeBodySchema = z.object({
-  email: z.string().email('Invalid email format'),
-  nom: z.string().min(1, 'Nom is required').max(200),
-  prenom: z.string().max(200).optional(),
-  telephone: z.string().max(20).optional(),
-  regionCode: z.string().max(3).optional(),
-  departementCode: z.string().max(3).optional(),
-  structureId: z.string().optional(),
-  statut: z.string().default('ACTIF'),
-  reseau: z.string().optional(),
-  aap: z.string().optional(),
-  financementChene: z.boolean().default(false),
-  financementActee: z.boolean().default(false),
-  financementAutre: z.string().optional(),
-  nbFormations: z.number().int().min(0).default(0),
-  nbBimestrielles: z.number().int().min(0).default(0),
-  nbCafeConnect: z.number().int().min(0).default(0),
-  nbNewsletters: z.number().int().min(0).default(0),
-})
-
-/** PUT /api/v1/economes/[id] */
-export const updateEconomeBodySchema = createEconomeBodySchema.partial()
-
 /** GET /api/v1/structures */
 export const structuresQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -410,7 +374,7 @@ export const statsQuerySchema = z.object({
   region: z.string().optional(),
 })
 
-/** GET /api/v1/laureats/geojson, economes/geojson, structures/geojson */
+/** GET /api/v1/laureats/geojson, structures/geojson */
 export const geojsonFilterSchema = z.object({
   region: z.string().optional(),
   departement: z.string().optional(),
@@ -419,11 +383,6 @@ export const geojsonFilterSchema = z.object({
   source: z.string().optional(),
   reseau: z.string().optional(),
   geoMode: z.string().optional(),
-})
-
-/** GET /api/v1/economes/search-by-commune */
-export const searchByCommuneQuerySchema = z.object({
-  commune: z.string().min(1, 'Le parametre commune est requis').max(5),
 })
 
 /** DELETE /api/v1/territoires/cache */
@@ -443,7 +402,7 @@ export const regionsQuerySchema = z.object({
 })
 
 /** POST /api/v1/import */
-export const importTypeSchema = z.enum(['laureats', 'economes', 'structures'])
+export const importTypeSchema = z.enum(['laureats', 'structures'])
 
 // ===== HELPER FUNCTIONS =====
 

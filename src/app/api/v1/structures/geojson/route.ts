@@ -23,7 +23,6 @@ async function handleGet(request: NextRequest) {
       include: {
         region: { select: { nom: true } },
         departement: { select: { nom: true } },
-        _count: { select: { economes: true } },
       },
     })
 
@@ -101,7 +100,6 @@ async function handleGet(request: NextRequest) {
             departement: structure.departement?.nom,
             regionCode: structure.regionCode,
             departementCode: structure.departementCode,
-            nbEconomes: structure._count.economes,
           },
         }
       })
