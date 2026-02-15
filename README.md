@@ -34,7 +34,7 @@ L'API Territoires est un **service autonome** qui expose les données géographi
 
 | Composant       | Technologie          | Version      |
 | --------------- | -------------------- | ------------ |
-| Framework       | Next.js (App Router) | 14.2.x       |
+| Framework       | Next.js (App Router) | 15.5.x       |
 | Langage         | TypeScript           | 5.3 (strict) |
 | ORM             | Prisma               | 5.22         |
 | Base de données | PostgreSQL + PostGIS | 16 + 3.4     |
@@ -102,17 +102,25 @@ api-territoires/
 3. **Sources de données** : Les imports dépendent d'APIs externes (geo.api.gouv.fr, CEREMA WFS, BANATIC). Ces APIs peuvent changer de format ou appliquer du rate limiting.
 4. **Cache** : Invalidation manuelle via `DELETE /api/v1/territoires/cache` ou programmatique via `invalidateAllCache()` dans `lib/cache.ts`.
 
+### Ce qui a été fait (v2.0)
+
+- Next.js 15.5.x + React 19 (toutes CVEs résolues)
+- CI/CD GitHub Actions (lint, test, build, docker, security audit)
+- 141 tests (12 suites Vitest)
+- Spec OpenAPI 3.0 (`GET /api/v1/openapi.json`)
+- Logging structuré Pino + X-Request-ID sur toutes les routes
+- exceljs (remplace xlsx vulnérable)
+- Backup automatique (`scripts/backup.sh`)
+- Validation Zod sur tous les endpoints
+
 ### Ce qui reste à faire
 
-| Priorité | Tâche                                                | Effort estimé |
-| -------- | ---------------------------------------------------- | ------------- |
-| Haute    | Mettre à jour Next.js vers 14.2.35+ (CVE sécurité)   | 1h            |
-| Haute    | CI/CD GitHub Actions (lint + test + build)           | 2h            |
-| Moyenne  | Augmenter la couverture de tests (actuellement ~15%) | 5-10h         |
-| Moyenne  | Ajouter spec OpenAPI/Swagger                         | 3h            |
-| Moyenne  | Logging structuré (pino) + X-Request-ID              | 2h            |
-| Basse    | Remplacer xlsx par alternative sans vulnérabilité    | 2h            |
-| Basse    | Script de backup automatique de la DB                | 1h            |
+| Priorité | Tâche                                               | Effort estimé |
+| -------- | --------------------------------------------------- | ------------- |
+| Moyenne  | Augmenter la couverture de tests (routes API)       | 5-10h         |
+| Moyenne  | Monitoring / alertes (Prometheus, Sentry...)        | 3h            |
+| Basse    | Documentation Swagger UI interactive                | 2h            |
+| Basse    | Rate limiting distribué (Redis au lieu d'in-memory) | 3h            |
 
 ---
 
@@ -121,7 +129,8 @@ api-territoires/
 ### Option 1 : Script automatique (recommandé)
 
 ```bash
-cd /root/services/api-territoires
+git clone https://github.com/pierrickdegardin/api-territoires.git
+cd api-territoires
 ./scripts/setup-dev.sh
 ```
 
@@ -130,7 +139,12 @@ Ce script installe les dépendances, lance la DB Docker, applique le schéma Pri
 ### Option 2 : Docker Compose (tout-en-un)
 
 ```bash
-cd /root/services/api-territoires
+git clone https://github.com/pierrickdegardin/api-territoires.git
+cd api-territoires
+
+# Configurer les secrets
+cp .env.docker.example .env.docker
+# Éditer .env.docker : renseigner POSTGRES_PASSWORD et JWT_SECRET
 
 # Lancer la stack complète (DB + API)
 docker compose up -d
@@ -143,19 +157,28 @@ docker exec api-territoires npx tsx scripts/import-territoires.ts --all
 curl http://localhost:3020/api/v1/territoires/health
 ```
 
-### Option 3 : Installation manuelle
+> **Note :** Le `docker-compose.yml` inclut des labels Traefik pour le reverse proxy.
+> Si vous n'utilisez pas Traefik, ignorez-les — le port 3020 est exposé directement sur localhost.
+
+### Option 3 : Installation manuelle (sans Docker)
 
 ```bash
-cd /root/services/api-territoires
+git clone https://github.com/pierrickdegardin/api-territoires.git
+cd api-territoires
 
-# Prérequis : PostgreSQL 16 + PostGIS accessible
+# Prérequis : Node.js 20+, PostgreSQL 16 + PostGIS 3.4
 cp .env.example .env
-# Éditer .env avec votre DATABASE_URL
+# Éditer .env avec votre DATABASE_URL pointant vers votre PostgreSQL+PostGIS
 
 npm install
 npx prisma generate
 npx prisma db push
 npm run dev
+
+# Optionnel : importer les données (~35000 communes)
+npx tsx scripts/import-territoires.ts --all
+# Ou : données minimales de test
+npx tsx scripts/seed.ts
 ```
 
 ---

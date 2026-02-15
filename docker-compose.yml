@@ -56,30 +56,5 @@ services:
         limits:
           cpus: '0.8'
           memory: 1792M
-    networks:
-      - default
-      - traefik
-    labels:
-      - 'traefik.enable=true'
-      # Connecte le service au reseau Traefik pour le routage
-      - 'traefik.docker.network=infra_default'
-      # URL publique d'acces a l'API territoires
-      - 'traefik.http.routers.api-territoires.rule=Host(`territoires.pierrickdegardin.fr`)'
-      # Points d'entree HTTP et HTTPS
-      - 'traefik.http.routers.api-territoires.entrypoints=web,websecure'
-      # Active le TLS pour HTTPS
-      - 'traefik.http.routers.api-territoires.tls=true'
-      # Utilise le resolver TLS pour generer automatiquement le certificat SSL via Let's Encrypt
-      - 'traefik.http.routers.api-territoires.tls.certresolver=mytlschallenge'
-      # Port interne du container expose pour le load balancer
-      - 'traefik.http.services.api-territoires.loadbalancer.server.port=3020'
-
 volumes:
   territoires_data:
-
-networks:
-  default:
-    name: territoires_network
-  traefik:
-    external: true
-    name: infra_default

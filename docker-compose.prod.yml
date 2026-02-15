@@ -1,0 +1,23 @@
+# Production overlay - Traefik reverse proxy
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  api-territoires:
+    networks:
+      - default
+      - traefik
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=infra_default'
+      - 'traefik.http.routers.api-territoires.rule=Host(`territoires.pierrickdegardin.fr`)'
+      - 'traefik.http.routers.api-territoires.entrypoints=web,websecure'
+      - 'traefik.http.routers.api-territoires.tls=true'
+      - 'traefik.http.routers.api-territoires.tls.certresolver=mytlschallenge'
+      - 'traefik.http.services.api-territoires.loadbalancer.server.port=3020'
+
+networks:
+  default:
+    name: territoires_network
+  traefik:
+    external: true
+    name: infra_default
