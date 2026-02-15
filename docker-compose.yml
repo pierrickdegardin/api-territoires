@@ -1,0 +1,85 @@
+# API Territoires - Service 100% autonome
+# Base de donnees PostGIS dediee + API Next.js
+
+services:
+  # Base de donnees PostgreSQL avec PostGIS
+  territoires-db:
+    image: postgis/postgis:16-3.4
+    container_name: territoires-db
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_DB: territoires
+      POSTGRES_USER: territoires
+    volumes:
+      - territoires_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U territoires -d territoires']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # API Next.js
+  api-territoires:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: api-territoires:${VERSION:-latest}
+    container_name: api-territoires
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      DATABASE_URL: 'postgresql://territoires:${POSTGRES_PASSWORD}@territoires-db:5432/territoires?schema=public'
+      NODE_ENV: 'production'
+      NODE_OPTIONS: '--max-old-space-size=1536'
+      REDIS_URL: 'redis://redis:6379'
+    depends_on:
+      territoires-db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3020/api/v1/territoires/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    ports:
+      - '127.0.0.1:3020:3020'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.8'
+          memory: 1792M
+    networks:
+      - default
+      - traefik
+    labels:
+      - 'traefik.enable=true'
+      # Connecte le service au reseau Traefik pour le routage
+      - 'traefik.docker.network=infra_default'
+      # URL publique d'acces a l'API territoires
+      - 'traefik.http.routers.api-territoires.rule=Host(`territoires.pierrickdegardin.fr`)'
+      # Points d'entree HTTP et HTTPS
+      - 'traefik.http.routers.api-territoires.entrypoints=web,websecure'
+      # Active le TLS pour HTTPS
+      - 'traefik.http.routers.api-territoires.tls=true'
+      # Utilise le resolver TLS pour generer automatiquement le certificat SSL via Let's Encrypt
+      - 'traefik.http.routers.api-territoires.tls.certresolver=mytlschallenge'
+      # Port interne du container expose pour le load balancer
+      - 'traefik.http.services.api-territoires.loadbalancer.server.port=3020'
+
+volumes:
+  territoires_data:
+
+networks:
+  default:
+    name: territoires_network
+  traefik:
+    external: true
+    name: infra_default

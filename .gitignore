@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.docker
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Prisma
+prisma/migrations/
+
+# Temp
+*.tmp
+*.log
+
+# pnpm
+pnpm-lock.yaml
+
+# Backups
+backups/

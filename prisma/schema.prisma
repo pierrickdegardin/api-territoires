@@ -1,0 +1,804 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+model Region {
+  code         String                   @id @db.VarChar(2)
+  nom          String                   @db.VarChar(100)
+  population   Int?
+  superficie   Float?
+  chefLieu     String?                  @map("chef_lieu") @db.VarChar(5)
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  geometry     Unsupported("geometry")?
+  centroid     Unsupported("geometry")?
+  departements Departement[]
+  structures   Structure[]
+  laureats     Laureat[]
+  economes     EconomeFlux[]
+
+  @@index([centroid], type: Gist)
+  @@index([geometry], type: Gist)
+  @@map("region")
+}
+
+model Departement {
+  code       String                   @id @db.VarChar(3)
+  nom        String                   @db.VarChar(100)
+  codeRegion String                   @map("code_region") @db.VarChar(2)
+  population Int?
+  superficie Float?
+  chefLieu   String?                  @map("chef_lieu") @db.VarChar(5)
+  createdAt  DateTime                 @default(now()) @map("created_at")
+  updatedAt  DateTime                 @updatedAt @map("updated_at")
+  geometry   Unsupported("geometry")?
+  centroid   Unsupported("geometry")?
+  communes   Commune[]
+  region     Region                   @relation(fields: [codeRegion], references: [code])
+  structures Structure[]
+  laureats   Laureat[]
+  economes   EconomeFlux[]
+
+  @@index([codeRegion])
+  @@index([centroid], type: Gist)
+  @@index([geometry], type: Gist)
+  @@map("departement")
+}
+
+model Commune {
+  code                String                   @id @db.VarChar(5)
+  nom                 String                   @db.VarChar(200)
+  codeDepartement     String                   @map("code_departement") @db.VarChar(3)
+  codeRegion          String                   @map("code_region") @db.VarChar(2)
+  codesPostaux        String[]                 @map("codes_postaux")
+  population          Int?
+  superficie          Float?
+  latitude            Float?
+  longitude           Float?
+  createdAt           DateTime                 @default(now()) @map("created_at")
+  updatedAt           DateTime                 @updatedAt @map("updated_at")
+  geometry            Unsupported("geometry")?
+  centroid            Unsupported("geometry")?
+  siren               String?                  @db.VarChar(9)
+  canton              String?                  @db.VarChar(100)
+  chefLieu            Boolean?                 @default(false) @map("chef_lieu")
+  zoneMontagne        Boolean?                 @default(false) @map("zone_montagne")
+  communeTouristique  Boolean?                 @default(false) @map("commune_touristique")
+  franceRuralites     Boolean?                 @default(false) @map("france_ruralites")
+  quartierPrioritaire Boolean?                 @default(false) @map("quartier_prioritaire")
+  uniteUrbaine        String?                  @map("unite_urbaine") @db.VarChar(100)
+  bassinVie           String?                  @map("bassin_vie") @db.VarChar(100)
+  aireAttraction      String?                  @map("aire_attraction") @db.VarChar(100)
+  maireCivilite       String?                  @map("maire_civilite") @db.VarChar(10)
+  maireNom            String?                  @map("maire_nom") @db.VarChar(100)
+  mairePrenom         String?                  @map("maire_prenom") @db.VarChar(100)
+  adresse             String?                  @db.VarChar(200)
+  codePostal          String?                  @map("code_postal") @db.VarChar(10)
+  telephone           String?                  @db.VarChar(20)
+  email               String?                  @db.VarChar(100)
+  densite             Float?
+  variationPopulation Float?                   @map("variation_population")
+  tauxActivite        Float?                   @map("taux_activite")
+  tauxChomage         Float?                   @map("taux_chomage")
+  revenuFiscalMedian  Int?                     @map("revenu_fiscal_median")
+  dgfTotale           Int?                     @map("dgf_totale")
+  dgfParHabitant      Float?                   @map("dgf_par_habitant")
+  departement         Departement              @relation(fields: [codeDepartement], references: [code])
+  groupements         CommuneGroupement[]
+  laureats            Laureat[]
+
+  @@index([codeDepartement])
+  @@index([codeRegion])
+  @@index([nom])
+  @@index([centroid], type: Gist)
+  @@index([geometry], type: Gist)
+  @@map("commune")
+}
+
+model Groupement {
+  siren              String                   @id @db.VarChar(9)
+  nom                String                   @db.VarChar(300)
+  type               TypeGroupement
+  nature             String?                  @db.VarChar(100)
+  codeRegion         String?                  @map("code_region") @db.VarChar(2)
+  population         Int?
+  nbCommunes         Int?                     @map("nb_communes")
+  dateCreation       DateTime?                @map("date_creation")
+  latitude           Float?
+  longitude          Float?
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
+  geometry           Unsupported("geometry")?
+  centroid           Unsupported("geometry")?
+  communeSiege       String?                  @map("commune_siege") @db.VarChar(100)
+  modeFinancement    String?                  @map("mode_financement") @db.VarChar(50)
+  syndicatALaCarte   Boolean?                 @default(false) @map("syndicat_a_la_carte")
+  interdepartemental Boolean?                 @default(false)
+  zoneMontagne       Boolean?                 @default(false) @map("zone_montagne")
+  epage              Boolean?                 @default(false)
+  eptb               Boolean?                 @default(false)
+  adresse            String?                  @db.VarChar(200)
+  codePostal         String?                  @map("code_postal") @db.VarChar(10)
+  ville              String?                  @db.VarChar(100)
+  telephone          String?                  @db.VarChar(20)
+  email              String?                  @db.VarChar(100)
+  siteWeb            String?                  @map("site_web") @db.VarChar(200)
+  teom               Boolean?                 @default(false)
+  reom               Boolean?                 @default(false)
+  dotationGlobale    Int?                     @map("dotation_globale")
+  dgfParHabitant     Float?                   @map("dgf_par_habitant")
+  potentielFiscal    Int?                     @map("potentiel_fiscal")
+  densite            Float?
+  presidentCivilite  String?                  @map("president_civilite") @db.VarChar(10)
+  presidentNom       String?                  @map("president_nom") @db.VarChar(100)
+  presidentPrenom    String?                  @map("president_prenom") @db.VarChar(100)
+  nbDelegues         Int?                     @map("nb_delegues")
+  competences        Json?
+  communes           CommuneGroupement[]
+  structures         Structure[]
+  laureats           Laureat[]
+
+  @@index([type])
+  @@index([codeRegion])
+  @@index([centroid], type: Gist)
+  @@index([geometry], type: Gist)
+  @@map("groupement")
+}
+
+model CommuneGroupement {
+  communeCode     String     @map("commune_code") @db.VarChar(5)
+  groupementSiren String     @map("groupement_siren") @db.VarChar(9)
+  dateAdhesion    DateTime?  @map("date_adhesion")
+  commune         Commune    @relation(fields: [communeCode], references: [code])
+  groupement      Groupement @relation(fields: [groupementSiren], references: [siren])
+
+  @@id([communeCode, groupementSiren])
+  @@map("commune_groupement")
+}
+
+model GroupementAdhesion {
+  groupementSiren String    @map("groupement_siren") @db.VarChar(9)
+  adhesionSiren   String    @map("adhesion_siren") @db.VarChar(9)
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@id([groupementSiren, adhesionSiren])
+  @@map("groupement_adhesion")
+}
+
+model Alias {
+  id           Int      @id @default(autoincrement())
+  alias        String   @db.VarChar(300)
+  aliasNorm    String   @map("alias_norm") @db.VarChar(300)
+  codeOfficiel String   @map("code_officiel") @db.VarChar(9)
+  type         String   @db.VarChar(20)
+  source       String?  @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([aliasNorm])
+  @@index([codeOfficiel])
+  @@map("alias")
+}
+
+model BatchMatchRequest {
+  id          String           @id @default(cuid())
+  clientId    String?          @map("client_id") @db.VarChar(100)
+  status      String           @default("pending") @db.VarChar(20)
+  totalItems  Int              @default(0) @map("total_items")
+  processed   Int              @default(0)
+  matched     Int              @default(0)
+  suggestions Int              @default(0)
+  failed      Int              @default(0)
+  expiresAt   DateTime         @map("expires_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  startedAt   DateTime?        @map("started_at")
+  completedAt DateTime?        @map("completed_at")
+  items       BatchMatchItem[]
+
+  @@map("batch_match_request")
+}
+
+model BatchMatchItem {
+  id           String            @id @default(cuid())
+  requestId    String            @map("request_id")
+  inputIndex   Int               @map("input_index")
+  query        String            @db.VarChar(200)
+  hints        Json?
+  status       String            @default("pending") @db.VarChar(20)
+  code         String?           @db.VarChar(9)
+  nom          String?           @db.VarChar(300)
+  type         String?           @db.VarChar(50)
+  confidence   Float?
+  matchSource  String?           @map("match_source") @db.VarChar(20)
+  alternatives Json?
+  errorMessage String?           @map("error_message") @db.VarChar(500)
+  request      BatchMatchRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@map("batch_match_item")
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String?   @db.VarChar(100)
+  email       String    @db.VarChar(255)
+  keyPrefix   String    @map("key_prefix") @db.VarChar(12)
+  keyHash     String    @map("key_hash") @db.VarChar(100)
+  description String?   @db.VarChar(500)
+  totalCalls  Int       @default(0) @map("total_calls")
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  revoked     Boolean   @default(false)
+  revokedAt   DateTime? @map("revoked_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([keyPrefix])
+  @@index([email])
+  @@map("api_key")
+}
+
+model GisementChaleur {
+  id                    String                   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  type                  TypeGisementChaleur
+  identifiant           String?                  @db.VarChar(100)
+  nom                   String                   @db.VarChar(300)
+  codeInsee             String?                  @map("code_insee") @db.VarChar(5)
+  commune               String?                  @db.VarChar(200)
+  codeDepartement       String?                  @map("code_departement") @db.VarChar(3)
+  codeRegion            String?                  @map("code_region") @db.VarChar(2)
+  adresse               String?                  @db.VarChar(500)
+  latitude              Float?
+  longitude             Float?
+  siret                 String?                  @db.VarChar(14)
+  operateur             String?                  @db.VarChar(300)
+  moa                   String?                  @db.VarChar(300)
+  typeInstallation      String?                  @map("type_installation") @db.VarChar(200)
+  rubriquesIcpe         String?                  @map("rubriques_icpe") @db.VarChar(100)
+  activitePrincipale    String?                  @map("activite_principale") @db.VarChar(300)
+  potentielChaleurBtMin Float?                   @map("potentiel_chaleur_bt_min")
+  potentielChaleurBtMax Float?                   @map("potentiel_chaleur_bt_max")
+  potentielChaleurHtMin Float?                   @map("potentiel_chaleur_ht_min")
+  potentielChaleurHtMax Float?                   @map("potentiel_chaleur_ht_max")
+  potentielAnnuel       Float?                   @map("potentiel_annuel")
+  capaciteEh            Int?                     @map("capacite_eh")
+  debitMoyenM3j         Float?                   @map("debit_moyen_m3j")
+  tempMoyAnnuelle       Float?                   @map("temp_moy_annuelle")
+  niveauConfiance       Int?                     @map("niveau_confiance")
+  source                String?                  @db.VarChar(100)
+  anneeReference        Int?                     @map("annee_reference")
+  qualiteLocalisation   String?                  @map("qualite_localisation") @db.VarChar(50)
+  commentaire           String?
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @default(now()) @updatedAt @map("updated_at")
+  geometry              Unsupported("geometry")?
+
+  @@index([type])
+  @@index([codeInsee])
+  @@index([codeDepartement])
+  @@index([geometry], type: Gist)
+  @@map("gisement_chaleur")
+}
+
+model InstallationProduction {
+  id                 String                   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  type               TypeInstallationProd
+  identifiant        String?                  @db.VarChar(100)
+  nom                String                   @db.VarChar(300)
+  codeInsee          String?                  @map("code_insee") @db.VarChar(5)
+  commune            String?                  @db.VarChar(200)
+  codeDepartement    String?                  @map("code_departement") @db.VarChar(3)
+  codeRegion         String?                  @map("code_region") @db.VarChar(2)
+  adresse            String?                  @db.VarChar(500)
+  latitude           Float?
+  longitude          Float?
+  moa                String?                  @db.VarChar(300)
+  typeMoa            String?                  @map("type_moa") @db.VarChar(100)
+  gestionnaire       String?                  @db.VarChar(300)
+  exploitant         String?                  @db.VarChar(300)
+  modeGestion        String?                  @map("mode_gestion") @db.VarChar(100)
+  anneeMiseService   Int?                     @map("annee_mise_service")
+  statut             String?                  @db.VarChar(50)
+  filiere            String?                  @db.VarChar(100)
+  technologie        String?                  @db.VarChar(100)
+  combustible        String?                  @db.VarChar(100)
+  combustible2       String?                  @db.VarChar(100)
+  secteur            String?                  @db.VarChar(100)
+  sousSecteur        String?                  @map("sous_secteur") @db.VarChar(100)
+  puissanceTotaleKw  Float?                   @map("puissance_totale_kw")
+  puissanceBoisKw    Float?                   @map("puissance_bois_kw")
+  surfaceCapteurM2   Float?                   @map("surface_capteur_m2")
+  stockageM3         Float?                   @map("stockage_m3")
+  capaciteKwhTh      Float?                   @map("capacite_kwh_th")
+  nbChaudieres       Int?                     @map("nb_chaudieres")
+  productionMwhAn    Float?                   @map("production_mwh_an")
+  productionEnrMwh   Float?                   @map("production_enr_mwh")
+  consoBoisTonnes    Float?                   @map("conso_bois_tonnes")
+  consoTotale        Float?                   @map("conso_totale")
+  tauxCouvertureBois Float?                   @map("taux_couverture_bois")
+  tauxEnr            Float?                   @map("taux_enr")
+  reseauChaleur      Boolean?                 @default(false) @map("reseau_chaleur")
+  longueurReseauM    Float?                   @map("longueur_reseau_m")
+  nbSousStations     Int?                     @map("nb_sous_stations")
+  typeCapteur        String?                  @map("type_capteur") @db.VarChar(100)
+  usage              String?                  @db.VarChar(100)
+  regime             String?                  @db.VarChar(100)
+  energieInjecteeGwh Float?                   @map("energie_injectee_gwh")
+  energieProduiteGwh Float?                   @map("energie_produite_gwh")
+  source             String?                  @db.VarChar(100)
+  qualiteXy          String?                  @map("qualite_xy") @db.VarChar(50)
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @default(now()) @updatedAt @map("updated_at")
+  geometry           Unsupported("geometry")?
+
+  @@index([type])
+  @@index([codeDepartement])
+  @@index([geometry], type: Gist)
+  @@map("installation_production")
+}
+
+model PlateformeStockageBois {
+  id                String                   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  nom               String                   @db.VarChar(300)
+  codeInsee         String?                  @map("code_insee") @db.VarChar(5)
+  commune           String?                  @db.VarChar(200)
+  codeDepartement   String?                  @map("code_departement") @db.VarChar(3)
+  codeRegion        String?                  @map("code_region") @db.VarChar(2)
+  adresse           String?                  @db.VarChar(500)
+  latitude          Float?
+  longitude         Float?
+  typePlateforme    String?                  @map("type_plateforme") @db.VarChar(100)
+  typeMoa           String?                  @map("type_moa") @db.VarChar(100)
+  categorie         String?                  @db.VarChar(100)
+  capaciteTonnes    Int?                     @map("capacite_tonnes")
+  categorieCapacite String?                  @map("categorie_capacite") @db.VarChar(50)
+  typeCombustible   String?                  @map("type_combustible") @db.VarChar(200)
+  surfaceStockage   String?                  @map("surface_stockage") @db.VarChar(50)
+  certification     String?                  @db.VarChar(100)
+  qualification     String?                  @db.VarChar(100)
+  source            String?                  @db.VarChar(100)
+  qualiteXy         String?                  @map("qualite_xy") @db.VarChar(50)
+  createdAt         DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  geometry          Unsupported("geometry")?
+
+  @@index([codeDepartement], map: "idx_plateforme_stockage_bois_code_departement")
+  @@index([codeInsee], map: "idx_plateforme_stockage_bois_code_insee")
+  @@index([codeRegion], map: "idx_plateforme_stockage_bois_code_region")
+  @@index([geometry], map: "idx_plateforme_stockage_bois_geometry", type: Gist)
+  @@map("plateforme_stockage_bois")
+}
+
+model ReseauChaleurFroid {
+  id                String                   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  type              TypeReseauChaleur
+  identifiant       String?                  @db.VarChar(100)
+  nom               String                   @db.VarChar(300)
+  communes          String?                  @db.VarChar(500)
+  codeInsee         String?                  @map("code_insee") @db.VarChar(5)
+  codeDepartement   String?                  @map("code_departement") @db.VarChar(3)
+  codeRegion        String?                  @map("code_region") @db.VarChar(2)
+  gestionnaire      String?                  @db.VarChar(300)
+  mo                String?                  @db.VarChar(300)
+  classement        String?                  @db.VarChar(10)
+  longueurKm        Float?                   @map("longueur_km")
+  nbPointsLivraison Int?                     @map("nb_points_livraison")
+  productionMwh     Float?                   @map("production_mwh")
+  livraisonsMwh     Float?                   @map("livraisons_mwh")
+  rendement         Float?
+  tauxEnr           Float?                   @map("taux_enr")
+  vapeur            Boolean?                 @default(false)
+  eauChaude         Boolean?                 @default(false) @map("eau_chaude")
+  eauSurchauffee    Boolean?                 @default(false) @map("eau_surchauffee")
+  dateMiseService   String?                  @map("date_mise_service") @db.VarChar(50)
+  source            String?                  @db.VarChar(100)
+  latitude          Float?
+  longitude         Float?
+  createdAt         DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  geometry          Unsupported("geometry")?
+
+  @@index([codeDepartement], map: "idx_reseau_chaleur_froid_code_departement")
+  @@index([codeRegion], map: "idx_reseau_chaleur_froid_code_region")
+  @@index([geometry], map: "idx_reseau_chaleur_froid_geometry", type: Gist)
+  @@index([type], map: "idx_reseau_chaleur_froid_type")
+  @@map("reseau_chaleur_froid")
+}
+
+model ZoneOpportunite {
+  id                 String                   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  type               TypeZoneOpportunite
+  idZone             String?                  @map("id_zone") @db.VarChar(100)
+  codeInsee          String?                  @map("code_insee") @db.VarChar(5)
+  codeDepartement    String?                  @map("code_departement") @db.VarChar(3)
+  codeRegion         String?                  @map("code_region") @db.VarChar(2)
+  classMode          Int?                     @map("class_mode")
+  classDensLin       Int?                     @map("class_dens_lin")
+  classBesoin        Int?                     @map("class_besoin")
+  filiere            String?                  @db.VarChar(50)
+  scenario           String?                  @db.VarChar(50)
+  besoinChauffage    Float?                   @map("besoin_chauffage")
+  besoinEcs          Float?                   @map("besoin_ecs")
+  besoinFroid        Float?                   @map("besoin_froid")
+  besoinResChauffage Float?                   @map("besoin_res_chauffage")
+  besoinResEcs       Float?                   @map("besoin_res_ecs")
+  besoinResFroid     Float?                   @map("besoin_res_froid")
+  besoinTerChauffage Float?                   @map("besoin_ter_chauffage")
+  besoinTerEcs       Float?                   @map("besoin_ter_ecs")
+  besoinTerFroid     Float?                   @map("besoin_ter_froid")
+  partTertiaire      Int?                     @map("part_tertiaire")
+  nbConstructions    Float?                   @map("nb_constructions")
+  surfaceM2          Float?                   @map("surface_m2")
+  perimetreM         Float?                   @map("perimetre_m")
+  idCerema           Int?                     @map("id_cerema")
+  latitude           Float?
+  longitude          Float?
+  createdAt          DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  geometry           Unsupported("geometry")?
+
+  @@index([codeDepartement], map: "idx_zone_opportunite_code_departement")
+  @@index([codeInsee], map: "idx_zone_opportunite_code_insee")
+  @@index([codeRegion], map: "idx_zone_opportunite_code_region")
+  @@index([geometry], map: "idx_zone_opportunite_geometry", type: Gist)
+  @@index([type], map: "idx_zone_opportunite_type")
+  @@map("zone_opportunite")
+}
+
+model ZoneClimatique {
+  id              String                   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  aireUrbaine     String                   @map("aire_urbaine") @db.VarChar(200)
+  codeInsee       String?                  @map("code_insee") @db.VarChar(5)
+  codeDepartement String?                  @map("code_departement") @db.VarChar(3)
+  codeRegion      String?                  @map("code_region") @db.VarChar(2)
+  classeLcz       String                   @map("classe_lcz") @db.VarChar(10)
+  descriptionLcz  String?                  @map("description_lcz") @db.VarChar(200)
+  surfaceM2       Float?                   @map("surface_m2")
+  source          String?                  @db.VarChar(100)
+  anneeReference  Int?                     @map("annee_reference")
+  createdAt       DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  geometry        Unsupported("geometry")?
+
+  @@index([aireUrbaine], map: "idx_zone_climatique_aire_urbaine")
+  @@index([classeLcz], map: "idx_zone_climatique_classe_lcz")
+  @@index([codeDepartement], map: "idx_zone_climatique_code_departement")
+  @@index([geometry], map: "idx_zone_climatique_geometry", type: Gist)
+  @@map("zone_climatique")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+enum TypeGroupement {
+  EPCI_CC
+  EPCI_CA
+  EPCI_CU
+  EPCI_METROPOLE
+  EPCI_EPT
+  SYNDICAT
+  SYNDICAT_MIXTE
+  PETR
+  PAYS
+  PNR
+  CAUE
+  ALEC
+  SYNDICAT_ENERGIE
+  AREC
+
+  @@map("type_groupement")
+}
+
+enum TypeGisementChaleur {
+  INCINERATION
+  INDUSTRIE
+  STEP
+  DATACENTER
+
+  @@map("type_gisement_chaleur")
+}
+
+enum TypeInstallationProd {
+  CHAUFFERIE_BOIS
+  SOLAIRE_THERMIQUE
+  ELECTROGENE
+
+  @@map("type_installation_prod")
+}
+
+enum TypeReseauChaleur {
+  CHALEUR
+  FROID
+  CONSTRUCTION
+  PERIMETRE_PRIORITAIRE
+
+  @@map("type_reseau_chaleur")
+}
+
+enum TypeZoneOpportunite {
+  CHALEUR_FORT_POTENTIEL
+  CHALEUR_POTENTIEL
+  FROID_FORT_POTENTIEL
+  FROID_POTENTIEL
+
+  @@map("type_zone_opportunite")
+}
+
+// ============================================
+// EPIC 1: Nouveaux modèles métier ACTEE
+// ============================================
+
+enum TypeStructure {
+  // Collectivités
+  COMMUNE
+  CONSEIL_DEPARTEMENTAL
+  CONSEIL_REGIONAL
+
+  // EPCI (réutilise les types existants conceptuellement)
+  COMMUNAUTE_COMMUNES
+  COMMUNAUTE_AGGLOMERATION
+  METROPOLE
+  COMMUNAUTE_URBAINE
+
+  // Syndicats
+  SYNDICAT_ENERGIE
+  SYNDICAT_MIXTE
+  SYNDICAT_INTERCOMMUNAL
+
+  // Énergie-Climat
+  ALEC
+  AREC
+
+  // Territoires
+  PETR
+  PNR
+
+  // Santé (PENSEE+ / FINESS)
+  ARS
+  CHU
+  CH
+  CLINIQUE
+  CENTRE_SANTE
+  EHPAD
+  PSYCHIATRIE
+  MEDICO_SOCIAL
+  HAD
+  DIALYSE
+  IMAGERIE
+  CANCER
+  ADDICTION
+  THERMAL
+
+  // Services publics
+  SDIS
+  ATD
+  CCAS
+  CIAS
+
+  // Autres
+  SPL
+  CCI
+
+  @@map("type_structure")
+}
+
+enum StatutLaureat {
+  LAUREAT
+  ELIGIBLE
+  NON_RETENU
+
+  @@map("statut_laureat")
+}
+
+enum SourceDonnees {
+  CHENE6
+  ACTEE_PLUS
+  PENSEE_PLUS
+
+  @@map("source_donnees")
+}
+
+enum StatutEF {
+  ACTIF
+  INACTIF
+  EN_FORMATION
+
+  @@map("statut_ef")
+}
+
+enum GeoMode {
+  TERRITOIRE
+  CUSTOM
+  ADRESSE
+
+  @@map("geo_mode")
+}
+
+enum RoleAdmin {
+  VIEWER
+  EDITOR
+  ADMIN
+
+  @@map("role_admin")
+}
+
+// Structure employeuse (pour les EF)
+model Structure {
+  id                String        @id @default(cuid())
+  nom               String        @db.VarChar(300)
+  type              TypeStructure
+  siren             String?       @unique @db.VarChar(9)
+
+  // Mode de géolocalisation
+  geoMode           GeoMode       @default(TERRITOIRE) @map("geo_mode")
+
+  // Mode TERRITOIRE : référence vers territoires existants
+  groupementSiren   String?       @map("groupement_siren") @db.VarChar(9)
+  departementCode   String?       @map("departement_code") @db.VarChar(3)
+  regionCode        String?       @map("region_code") @db.VarChar(2)
+
+  // Mode CUSTOM : polygone dessiné
+  perimetreCustom   Json?         @map("perimetre_custom")
+
+  // Mode ADRESSE : point géocodé
+  adresse           String?       @db.VarChar(300)
+  codePostal        String?       @map("code_postal") @db.VarChar(10)
+  ville             String?       @db.VarChar(200)
+  latitude          Float?
+  longitude         Float?
+  telephone         String?       @db.VarChar(20)
+
+  // FINESS (établissements de santé)
+  finess            String?       @unique @db.VarChar(9)
+  finessEj          String?       @map("finess_ej") @db.VarChar(9)
+  categorieFiness   String?       @map("categorie_finess") @db.VarChar(200)
+
+  // Audit
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  createdBy         String?       @map("created_by") @db.VarChar(100)
+
+  // Relations
+  economes          EconomeFlux[]
+  groupement        Groupement?   @relation(fields: [groupementSiren], references: [siren])
+  departement       Departement?  @relation(fields: [departementCode], references: [code])
+  region            Region?       @relation(fields: [regionCode], references: [code])
+
+  @@index([type])
+  @@index([regionCode])
+  @@index([departementCode])
+  @@index([finess])
+  @@map("structure")
+}
+
+// Lauréat ACTEE/CHENE/PENSEE
+model Laureat {
+  id                String        @id @default(cuid())
+  nom               String        @db.VarChar(300)
+  type              TypeStructure
+  codeInsee         String?       @map("code_insee") @db.VarChar(5)
+  siren             String?       @db.VarChar(9)
+
+  // Localisation
+  regionCode        String        @map("region_code") @db.VarChar(2)
+  departementCode   String        @map("departement_code") @db.VarChar(3)
+
+  // Rattachement territoire (pour géométrie)
+  communeCode       String?       @map("commune_code") @db.VarChar(5)
+  groupementSiren   String?       @map("groupement_siren") @db.VarChar(9)
+
+  // Métadonnées
+  statut            StatutLaureat @default(LAUREAT)
+  source            SourceDonnees
+  aap               String?       @db.VarChar(100)
+  commentaires      String?
+
+  // Contact
+  contactNom        String?       @map("contact_nom") @db.VarChar(100)
+  contactEmail      String?       @map("contact_email") @db.VarChar(100)
+  contactTelephone  String?       @map("contact_telephone") @db.VarChar(20)
+
+  // Financier
+  coutTotal         Float?        @map("cout_total")
+  aideSollicitee    Float?        @map("aide_sollicitee")
+  aideValidee       Float?        @map("aide_validee")
+  lot1              Boolean       @default(false)
+  lot2              Boolean       @default(false)
+  lot3              Boolean       @default(false)
+  lot4              Boolean       @default(false)
+  lot5              Boolean       @default(false)
+
+  // Audit
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  createdBy         String?       @map("created_by") @db.VarChar(100)
+
+  // Relations
+  region            Region        @relation(fields: [regionCode], references: [code])
+  departement       Departement   @relation(fields: [departementCode], references: [code])
+  communeRef        Commune?      @relation(fields: [communeCode], references: [code])
+  groupement        Groupement?   @relation(fields: [groupementSiren], references: [siren])
+
+  @@index([type])
+  @@index([statut])
+  @@index([source])
+  @@index([regionCode])
+  @@index([departementCode])
+  @@map("laureat")
+}
+
+// Économe de Flux
+model EconomeFlux {
+  id                String      @id @default(cuid())
+  email             String      @unique @db.VarChar(100)
+  nom               String      @db.VarChar(100)
+  prenom            String      @db.VarChar(100)
+  telephone         String?     @db.VarChar(20)
+
+  // Localisation
+  regionCode        String      @map("region_code") @db.VarChar(2)
+  departementCode   String      @map("departement_code") @db.VarChar(3)
+
+  // Structure employeuse
+  structureId       String      @map("structure_id")
+
+  // Métadonnées
+  statut            StatutEF    @default(ACTIF)
+  reseau            String?     @db.VarChar(50)
+  aap               String?     @db.VarChar(100)
+
+  // Financement
+  financementChene  Boolean     @default(false) @map("financement_chene")
+  financementActee  Boolean     @default(false) @map("financement_actee")
+  financementAutre  String?     @map("financement_autre") @db.VarChar(200)
+
+  // Engagement
+  nbFormations      Int         @default(0) @map("nb_formations")
+  nbBimestrielles   Int         @default(0) @map("nb_bimestrielles")
+  nbCafeConnect     Int         @default(0) @map("nb_cafe_connect")
+  nbNewsletters     Int         @default(0) @map("nb_newsletters")
+
+  // Audit
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  createdBy         String?     @map("created_by") @db.VarChar(100)
+
+  // Relations
+  structure         Structure   @relation(fields: [structureId], references: [id])
+  region            Region      @relation(fields: [regionCode], references: [code])
+  departement       Departement @relation(fields: [departementCode], references: [code])
+
+  @@index([structureId])
+  @@index([statut])
+  @@index([regionCode])
+  @@index([departementCode])
+  @@map("econome_flux")
+}
+
+// Utilisateur admin
+model AdminUser {
+  id        String    @id @default(cuid())
+  email     String    @unique @db.VarChar(100)
+  password  String    @db.VarChar(100)
+  nom       String    @db.VarChar(100)
+  role      RoleAdmin @default(EDITOR)
+  active    Boolean   @default(true)
+  lastLogin DateTime? @map("last_login")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_user")
+}
